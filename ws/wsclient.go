@@ -24,6 +24,7 @@ func StartClient(iface *water.Interface, config config.Config) {
 		conn := netutil.ConnectServer(config)
 		if conn == nil {
 			time.Sleep(3 * time.Second)
+			log.Println("连接失败，重试中")
 			continue
 		}
 		cache.GetCache().Set("wsconn", conn, 24*time.Hour)
@@ -36,10 +37,22 @@ func StartClient(iface *water.Interface, config config.Config) {
 func ping(wsconn net.Conn, config config.Config) {
 	defer wsconn.Close()
 	for {
+		if err := wsconn.SetWriteDeadline(time.Now().Add(5 * time.Second)); err != nil {
+			log.Printf("Failed to set read deadline: %s\n", err)
+			return
+		}
+		// wsconn.SetReadDeadline(time.Now().Add(10 * time.Second))
+		// c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		err := wsutil.WriteClientMessage(wsconn, ws.OpText, []byte("ping"))
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				// 超时错误，忽略并继续发送心跳
+				continue
+			}
+			log.Printf("Failed to read from connection: %s\n", err)
 			break
 		}
+		log.Println("send ping")
 		time.Sleep(3 * time.Second)
 	}
 }

@@ -1,1 +1,1 @@
-go build -o vtun-linux-amd -ldflags "-s -w" main.go  
+go build -o vtun-linux-amd64 -ldflags "-s -w" main.go  

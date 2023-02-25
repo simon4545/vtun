@@ -17,5 +17,5 @@ logs/
 bin/
 scripts/client.sh
 
-vtun-linux-amd
+vtun-linux-amd64
 
